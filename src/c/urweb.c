@@ -2479,6 +2479,7 @@ uw_Basis_string uw_Basis_strsuffix(uw_context ctx, uw_Basis_string s, uw_Basis_i
 
 uw_Basis_int uw_Basis_strlen(uw_context ctx, uw_Basis_string s) {
   (void)ctx;
+  fprintf(stderr, "uw_Basis_strlen of %s\n", s);
   int offset = 0, iterations = 0;
   while (s[offset] != 0) {
     U8_FWD_1(s, offset, -1);

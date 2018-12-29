@@ -28,6 +28,18 @@ fun test_fn_cside [a ::: Type] (_ : eq a) (_ : show a) (f : unit -> a) (expected
       </active>
     </xml>
 
+fun test_fn_cside_int (f : unit -> int) (expected : int) (testname : string) : xbody =
+    <xml>
+      <active code={let
+		    val computed = f ()		    
+		    in
+			if computed = expected then
+			    return <xml><p>{[testname]}</p><pre>True</pre></xml>
+			else
+			    return <xml><p>{[testname]}</p><pre>False</pre></xml>
+		    end}>
+</active>
+	</xml>
 
 fun test_fn_cside_ch (f : unit -> char) (expected : char) (testname : string) : xbody =
     <xml>
@@ -57,76 +69,120 @@ fun test_fn_cside_b (f : unit -> bool) (expected : bool) (testname : string) : x
 			    return <xml><p>ERROR {[testname]}: {[msgErr]}</p></xml>
 		    end}>
       </active>
-</xml>
+	</xml>
 
+fun generateTests _ =
+    return { SL1 = (strlen "𝌆𝌇𝌈𝌉"),
+	     SL2 = (strlen "𝌇𝌈𝌉"),
+	     SL3 = (strlen "𝌈𝌉"),
+	     SL4 = (strlen "𝌉"),
+	     SS1 = (substring "𝌆𝌇𝌈𝌉" 1 3),
+	     SS2 = (substring "𝌆𝌇𝌈𝌉" 2 2),
+	     SS3 = (substring "𝌆𝌇𝌈𝌉" 3 1) ,
+	     SLSS1 = (strlen (substring "𝌆𝌇𝌈𝌉" 1 3)),
+	     SLSS2 = (strlen (substring "𝌆𝌇𝌈𝌉" 2 2)),
+	     SLSS3 = (strlen (substring "𝌆𝌇𝌈𝌉" 3 1)),
+
+	     SSB1 = (strsub "𝌆𝌇𝌈𝌉" 0),
+	     SSB2 = (strsub "𝌆𝌇𝌈𝌉" 1),
+	     SSB3 = (strsub "𝌆𝌇𝌈𝌉" 2),
+	     SSB4 = (strsub "𝌆𝌇𝌈𝌉" 3),
+
+	     SSF1 = (strsuffix "𝌆𝌇𝌈𝌉" 0),
+	     SSF2 = (strsuffix "𝌆𝌇𝌈𝌉" 1),
+	     SSF3 = (strsuffix "𝌆𝌇𝌈𝌉" 2),
+	     SSF4 = (strsuffix "𝌆𝌇𝌈𝌉" 3),
+
+	     SC1 = (strchr "𝌆𝌇𝌈𝌉" #"c"),
+	     SC2 = (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)),
+	     SC3 = (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)),
+	     SC4 = (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)),
+	     SC5 = (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)),
+
+	     SI1 = (strindex "𝌆𝌇𝌈𝌉" #"c"),
+	     SI2 = (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)),
+	     SI3 = (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)),
+	     SI4 = (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)),
+	     SI5 = (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0))
+	   }
 
 fun highencode () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_cside (fn _ => strlen "𝌆𝌇𝌈𝌉") (strlen "𝌆𝌇𝌈𝌉") "high encode - strlen 1"}
-	{test_fn_cside (fn _ => strlen "𝌇𝌈𝌉") (strlen "𝌇𝌈𝌉") "high encode - strlen 2"}
-	{test_fn_cside (fn _ => strlen "𝌈𝌉") (strlen "𝌈𝌉") "high encode - strlen 3"}
-	{test_fn_cside (fn _ => strlen "𝌉") (strlen "𝌉") "high encode - strlen 4"}
-	
-	{test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 1 3) (substring "𝌆𝌇𝌈𝌉" 1 3) "high encode - substring 1"}
-	{test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 2 2) (substring "𝌆𝌇𝌈𝌉" 2 2) "high encode - substring 2"}
-	{test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 3 1) (substring "𝌆𝌇𝌈𝌉" 3 1) "high encode - substring 3"}
+      <body onload={tests <- rpc (generateTests ()); set t (Some tests); return ()}>
 
-	{test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 1 3)) (strlen (substring "𝌆𝌇𝌈𝌉" 1 3)) "high encode - strlen of substring 1"}
-	{test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 2 2)) (strlen (substring "𝌆𝌇𝌈𝌉" 2 2)) "high encode - strlen of substring 2"}
-	{test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 3 1)) (strlen (substring "𝌆𝌇𝌈𝌉" 3 1)) "high encode - strlen of substring 3"}
+	<dyn signal={tests' <- signal t;
+		     case tests' of
+			 None => return <xml></xml>
+		       | Some tests => return <xml>
 
-	{test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 0) (strsub "𝌆𝌇𝌈𝌉" 0) "high encode - strsub 1"}
-	{test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 1) (strsub "𝌆𝌇𝌈𝌉" 1) "high encode - strsub 2"}
-	{test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 2) (strsub "𝌆𝌇𝌈𝌉" 2) "high encode - strsub 3"}
-	{test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 3) (strsub "𝌆𝌇𝌈𝌉" 3) "high encode - strsub 4"}
+			 {test_fn_cside (fn _ => strlen "𝌆𝌇𝌈𝌉") tests.SL1 "high encode - strlen 1"}
+			 {test_fn_cside (fn _ => strlen "𝌇𝌈𝌉") tests.SL2 "high encode - strlen 2"}
+			 {test_fn_cside (fn _ => strlen "𝌈𝌉") tests.SL3 "high encode - strlen 3"}
+			 {test_fn_cside (fn _ => strlen "𝌉") tests.SL4 "high encode - strlen 4"}
+			 
+			 {test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 1 3) tests.SS1 "high encode - substring 1"}
+			 {test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 2 2) tests.SS2 "high encode - substring 2"}
+			 {test_fn_cside (fn _ => substring "𝌆𝌇𝌈𝌉" 3 1) tests.SS3 "high encode - substring 3"}
 
-	{test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 0) (strsuffix "𝌆𝌇𝌈𝌉" 0) "high encode - strsuffix 1"}
-	{test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 1) (strsuffix "𝌆𝌇𝌈𝌉" 1) "high encode - strsuffix 2"}
-	{test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 2) (strsuffix "𝌆𝌇𝌈𝌉" 2) "high encode - strsuffix 3"}
-	{test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 3) (strsuffix "𝌆𝌇𝌈𝌉" 3) "high encode - strsuffix 4"}
+			 {test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 1 3)) tests.SLSS1 "high encode - strlen of substring 1"}
+			 {test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 2 2)) tests.SLSS2 "high encode - strlen of substring 2"}
+			 {test_fn_cside (fn _ => strlen (substring "𝌆𝌇𝌈𝌉" 3 1)) tests.SLSS3 "high encode - strlen of substring 3"}
 
-	{test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" #"c") (strchr "𝌆𝌇𝌈𝌉" #"c") "high encode - strchr 1"}
-	{test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) "high encode - strchr 2"}
-	{test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) "high encode - strchr 3"}
-	{test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) "high encode - strchr 4"}
-	{test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) (strchr "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) "high encode - strchr 5"}
+			 {test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 0) tests.SSB1 "high encode - strsub 1"}
+			 {test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 1) tests.SSB2 "high encode - strsub 2"}
+			 {test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 2) tests.SSB3 "high encode - strsub 3"}
+			 {test_fn_cside (fn _ => strsub "𝌆𝌇𝌈𝌉" 3) tests.SSB4 "high encode - strsub 4"}
 
-	{test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" #"c") (strindex "𝌆𝌇𝌈𝌉" #"c") "high encode - strindex 1"}
-	{test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) "high encode - strindex 2"}
-	{test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) "high encode - strindex 3"}
-	{test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) "high encode - strindex 4"}
-	{test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) (strindex "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) "high encode - strindex 5"}
+			 {test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 0) tests.SSF1 "high encode - strsuffix 1"}
+			 {test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 1) tests.SSF2 "high encode - strsuffix 2"}
+			 {test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 2) tests.SSF3 "high encode - strsuffix 3"}
+			 {test_fn_cside (fn _ => strsuffix "𝌆𝌇𝌈𝌉" 3) tests.SSF4 "high encode - strsuffix 4"}
 
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "") (strsindex "𝌆𝌇𝌈𝌉" "") "high encode - strsindex 1"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") "high encode - strsindex 2"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈c") "high encode - strsindex 3"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") "high encode - strsindex 4"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈c") "high encode - strsindex 5"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌈𝌉") "high encode - strsindex 6"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌈c") "high encode - strsindex 7"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌉") "high encode - strsindex 8"}
-	{test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "c") (strsindex "𝌆𝌇𝌈𝌉" "c") "high encode - strsindex 9"}
+			 {test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" #"c") tests.SC1 "high encode - strchr 1"}
+			 {test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) tests.SC2 "high encode - strchr 2"}
+			 {test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) tests.SC3 "high encode - strchr 3"}
+			 {test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) tests.SC4 "high encode - strchr 4"}
+			 {test_fn_cside (fn _ => strchr "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) tests.SC5 "high encode - strchr 5"}
 
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "") (strcspn "𝌆𝌇𝌈𝌉" "") "high encode - strcspn 1"}
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") "high encode - strcspn 2"}
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌆") (strcspn "𝌆𝌇𝌈𝌉" "𝌆") "high encode - strcspn 3"}
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") "high encode - strcspn 4"}
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌈𝌉") "high encode - strcspn 5"}
-	{test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌉") "high encode - strcspn 6"}
-	
-	{test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 0)) (ord (strsub "𝌆𝌇𝌈𝌉" 0)) "high encode - ord 1"}
-	{test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 1)) (ord (strsub "𝌆𝌇𝌈𝌉" 1)) "high encode - ord 2"}
-	{test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 2)) (ord (strsub "𝌆𝌇𝌈𝌉" 2)) "high encode - ord 3"}
-	{test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 3)) (ord (strsub "𝌆𝌇𝌈𝌉" 3)) "high encode - ord 4"}
+			 {test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" #"c") tests.SI1 "high encode - strindex 1"}
+			 {test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌆" 0)) tests.SI2 "high encode - strindex 2"}
+			 {test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌇" 0)) tests.SI3 "high encode - strindex 3"}
+			 {test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌈" 0)) tests.SI4 "high encode - strindex 4"}
+			 {test_fn_cside (fn _ => strindex "𝌆𝌇𝌈𝌉" (strsub "𝌉" 0)) tests.SI5 "high encode - strindex 5"}
 
-	{test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 0)) (show (strsub "𝌆𝌇𝌈𝌉" 0)) "high encode - show 1"}
-	{test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 1)) (show (strsub "𝌆𝌇𝌈𝌉" 1)) "high encode - show 2"}
-	{test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 2)) (show (strsub "𝌆𝌇𝌈𝌉" 2)) "high encode - show 3"}
-	{test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 3)) (show (strsub "𝌆𝌇𝌈𝌉" 3)) "high encode - show 4"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "") (strsindex "𝌆𝌇𝌈𝌉" "") "high encode - strsindex 1"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") "high encode - strsindex 2"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈c") "high encode - strsindex 3"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") "high encode - strsindex 4"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌇𝌈c") "high encode - strsindex 5"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌈𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌈𝌉") "high encode - strsindex 6"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌈c") (strsindex "𝌆𝌇𝌈𝌉" "𝌈c") "high encode - strsindex 7"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "𝌉") (strsindex "𝌆𝌇𝌈𝌉" "𝌉") "high encode - strsindex 8"}
+			 {test_fn_cside (fn _ => strsindex "𝌆𝌇𝌈𝌉" "c") (strsindex "𝌆𝌇𝌈𝌉" "c") "high encode - strsindex 9"}
+
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "") (strcspn "𝌆𝌇𝌈𝌉" "") "high encode - strcspn 1"}
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌆𝌇𝌈𝌉") "high encode - strcspn 2"}
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌆") (strcspn "𝌆𝌇𝌈𝌉" "𝌆") "high encode - strcspn 3"}
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌇𝌈𝌉") "high encode - strcspn 4"}
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌈𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌈𝌉") "high encode - strcspn 5"}
+			 {test_fn_cside (fn _ => strcspn "𝌆𝌇𝌈𝌉" "𝌉") (strcspn "𝌆𝌇𝌈𝌉" "𝌉") "high encode - strcspn 6"}
+			 
+			 {test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 0)) (ord (strsub "𝌆𝌇𝌈𝌉" 0)) "high encode - ord 1"}
+			 {test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 1)) (ord (strsub "𝌆𝌇𝌈𝌉" 1)) "high encode - ord 2"}
+			 {test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 2)) (ord (strsub "𝌆𝌇𝌈𝌉" 2)) "high encode - ord 3"}
+			 {test_fn_cside (fn _ => ord (strsub "𝌆𝌇𝌈𝌉" 3)) (ord (strsub "𝌆𝌇𝌈𝌉" 3)) "high encode - ord 4"}
+
+			 {test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 0)) (show (strsub "𝌆𝌇𝌈𝌉" 0)) "high encode - show 1"}
+			 {test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 1)) (show (strsub "𝌆𝌇𝌈𝌉" 1)) "high encode - show 2"}
+			 {test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 2)) (show (strsub "𝌆𝌇𝌈𝌉" 2)) "high encode - show 3"}
+			 {test_fn_cside (fn _ => show (strsub "𝌆𝌇𝌈𝌉" 3)) (show (strsub "𝌆𝌇𝌈𝌉" 3)) "high encode - show 4"}
+
+		       </xml> } />
 
 	</body>
-      </xml>
+    </xml>
+    
 
 fun substrings () : transaction page =
     return <xml>
