@@ -2045,15 +2045,16 @@ uw_Basis_string uw_Basis_urlifyTime(uw_context ctx, uw_Basis_time t) {
 uw_unit uw_Basis_urlifyTime_w(uw_context ctx, uw_Basis_time t) {
   return uw_Basis_urlifyInt_w(ctx, (uw_Basis_int)t.seconds * 1000000 + t.microseconds);
 }
-
+uw_Basis_string uw_Basis_str1(uw_context ctx, uw_Basis_char c) ;
 uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
+  
   if (c == '\0') {
     uw_check(ctx, 1);
     uw_writec_unsafe(ctx, '_');
     return uw_unit_v;
   }
 
-  uw_check(ctx, 3 + !!(c == '_'));
+  uw_check(ctx, 12 + !!(c == '_'));
 
   if (c == '_')
     uw_writec_unsafe(ctx, '_');
@@ -2063,8 +2064,44 @@ uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
   else if (U8_IS_SINGLE(c) && isalnum(c))
     uw_writec_unsafe(ctx, c);
   else {
-    sprintf(ctx->page.front, ".%02X", c);
-    ctx->page.front += 3;
+    fprintf(stderr, "char %X %s\n", c, uw_Basis_str1(ctx, c));
+    
+    if((uint32_t)(c)<=0x7f) {
+      //(s)[(i)++]=(uint8_t)(c);
+      sprintf(ctx->page.front, ".%02X", (uint8_t)(c));
+      fprintf(stderr, ".%02X\n", (uint8_t)(c));
+      ctx->page.front += 3;
+    } else {
+      if((uint32_t)(c)<=0x7ff) {
+	//(s)[(i)++]=(uint8_t)(((c)>>6)|0xc0);
+	sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>6)|0xc0));
+	fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>6)|0xc0));
+	ctx->page.front += 3;
+      } else {
+	if((uint32_t)(c)<=0xffff) { 
+	  //(s)[(i)++]=(uint8_t)(((c)>>12)|0xe0);
+	  sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>12)|0xe0));
+	  fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>12)|0xe0));
+	  ctx->page.front += 3;
+	} else { 
+	  //(s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); 
+	  //(s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80);
+	  sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>18)|0xf0));
+	  sprintf(ctx->page.front, ".%02X", (uint8_t)((((c)>>12)&0x3f)|0x80));
+	  fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>18)|0xf0));
+	  fprintf(stderr, ".%02X\n", (uint8_t)((((c)>>12)&0x3f)|0x80));
+	  ctx->page.front += 6;
+	} 
+	//(s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80);
+	sprintf(ctx->page.front, ".%02X", (uint8_t)((((c)>>6)&0x3f)|0x80));
+	fprintf(stderr, ".%02X\n", (uint8_t)((((c)>>6)&0x3f)|0x80));
+	ctx->page.front += 3;
+      } 
+      //(s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80);
+      sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)&0x3f)|0x80));
+      fprintf(stderr, ".%02X\n", (uint8_t)(((c)&0x3f)|0x80));
+      ctx->page.front += 3;
+    } 
   }
   
   return uw_unit_v;
