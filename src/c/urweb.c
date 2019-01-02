@@ -2046,6 +2046,30 @@ uw_unit uw_Basis_urlifyTime_w(uw_context ctx, uw_Basis_time t) {
   return uw_Basis_urlifyInt_w(ctx, (uw_Basis_int)t.seconds * 1000000 + t.microseconds);
 }
 
+uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
+  if (c == '\0') {
+    uw_check(ctx, 1);
+    uw_writec_unsafe(ctx, '_');
+    return uw_unit_v;
+  }
+
+  uw_check(ctx, 3 + !!(c == '_'));
+
+  if (c == '_')
+    uw_writec_unsafe(ctx, '_');
+  
+  if (c == ' ')
+    uw_writec_unsafe(ctx, '+');
+  else if (U8_IS_SINGLE(c) && isalnum(c))
+    uw_writec_unsafe(ctx, c);
+  else {
+    sprintf(ctx->page.front, ".%02X", c);
+    ctx->page.front += 3;
+  }
+  
+  return uw_unit_v;
+}
+
 uw_unit uw_Basis_urlifyString_w(uw_context ctx, uw_Basis_string s) {
   if (s[0] == '\0') {
     uw_check(ctx, 1);
