@@ -1954,28 +1954,75 @@ char *uw_Basis_urlifyFloat(uw_context ctx, uw_Basis_float n) {
   return r;
 }
 
+void aux_urlifyChar(char** ptr, uw_Basis_char c) {
+  char* p = *ptr;
+  
+
+  if((uint32_t)(c)<=0x7f) {
+    //(s)[(i)++]=(uint8_t)(c);
+    sprintf(p, ".%02X", (uint8_t)(c));
+    fprintf(stderr, "#1 .%02X\n", (uint8_t)(c));
+    p += 3;
+  } else {
+    if((uint32_t)(c)<=0x7ff) {
+      //(s)[(i)++]=(uint8_t)(((c)>>6)|0xc0);
+      sprintf(p, ".%02X", (uint8_t)(((c)>>6)|0xc0));
+      fprintf(stderr, "#2 .%02X\n", (uint8_t)(((c)>>6)|0xc0));
+      p += 3;
+    } else {
+      if((uint32_t)(c)<=0xffff) { 
+	//(s)[(i)++]=(uint8_t)(((c)>>12)|0xe0);
+	sprintf(p, ".%02X", (uint8_t)(((c)>>12)|0xe0));
+	fprintf(stderr, "#3 .%02X\n", (uint8_t)(((c)>>12)|0xe0));
+	p += 3;
+      } else { 
+	//(s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); 
+	//(s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80);
+	sprintf(p, ".%02X", (uint8_t)(((c)>>18)|0xf0));
+	p += 3;
+	sprintf(p, ".%02X", (uint8_t)((((c)>>12)&0x3f)|0x80));
+	p += 3;
+	fprintf(stderr, "#4 .%02X\n", (uint8_t)(((c)>>18)|0xf0));
+	fprintf(stderr, "#5 .%02X\n", (uint8_t)((((c)>>12)&0x3f)|0x80));
+      } 
+      //(s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80);
+      sprintf(p, ".%02X", (uint8_t)((((c)>>6)&0x3f)|0x80));
+      fprintf(stderr, "#6 .%02X\n", (uint8_t)((((c)>>6)&0x3f)|0x80));
+      p += 3;
+    } 
+    //(s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80);
+    sprintf(p, ".%02X", (uint8_t)(((c)&0x3f)|0x80));
+    fprintf(stderr, "#7 .%02X\n", (uint8_t)(((c)&0x3f)|0x80));
+    p += 3;
+  }
+
+  *ptr = p;
+}
+
 char *uw_Basis_urlifyString(uw_context ctx, uw_Basis_string s) {
   char *r, *p;
+  fprintf(stderr, "uw_Basis_urlifyString\n");
 
   if (s[0] == '\0')
     return "_";
 
-  uw_check_heap(ctx, strlen(s) * 3 + 1 + !!(s[0] == '_'));
+  uw_check_heap(ctx, strlen(s) * 12 + 1 + !!(s[0] == '_'));
 
   r = p = ctx->heap.front;
   if (s[0] == '_')
     *p++ = '_';
 
-  for (; *s; s++) {
-    unsigned char c = *s;
-
-    if (c == ' ')
+  uw_Basis_char c;
+  int offset = 0;
+  while (s[offset] != 0) {
+    U8_NEXT(s, offset, -1, c);
+  
+    if (U8_IS_SINGLE(s[offset]) && s[offset] == ' ')
       *p++ = '+';
-    else if (U8_IS_SINGLE(c) && isalnum(c))
-      *p++ = c;
+    else if (U8_IS_SINGLE(s[offset]) && isalnum(s[offset]))
+      *p++ = s[offset];
     else {
-      sprintf(p, ".%02X", c);
-      p += 3;
+      aux_urlifyChar(&p, c);
     }
   }
 
@@ -2045,9 +2092,10 @@ uw_Basis_string uw_Basis_urlifyTime(uw_context ctx, uw_Basis_time t) {
 uw_unit uw_Basis_urlifyTime_w(uw_context ctx, uw_Basis_time t) {
   return uw_Basis_urlifyInt_w(ctx, (uw_Basis_int)t.seconds * 1000000 + t.microseconds);
 }
-uw_Basis_string uw_Basis_str1(uw_context ctx, uw_Basis_char c) ;
+
 uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
-  
+  fprintf(stderr, "uw_Basis_urlifyChar_w\n");
+
   if (c == '\0') {
     uw_check(ctx, 1);
     uw_writec_unsafe(ctx, '_');
@@ -2061,74 +2109,39 @@ uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
   
   if (c == ' ')
     uw_writec_unsafe(ctx, '+');
-  else if (U8_IS_SINGLE(c) && isalnum(c))
+  else if (isalnum(c) && c <= 0x7f)
     uw_writec_unsafe(ctx, c);
   else {
-    fprintf(stderr, "char %X %s\n", c, uw_Basis_str1(ctx, c));
-    
-    if((uint32_t)(c)<=0x7f) {
-      //(s)[(i)++]=(uint8_t)(c);
-      sprintf(ctx->page.front, ".%02X", (uint8_t)(c));
-      fprintf(stderr, ".%02X\n", (uint8_t)(c));
-      ctx->page.front += 3;
-    } else {
-      if((uint32_t)(c)<=0x7ff) {
-	//(s)[(i)++]=(uint8_t)(((c)>>6)|0xc0);
-	sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>6)|0xc0));
-	fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>6)|0xc0));
-	ctx->page.front += 3;
-      } else {
-	if((uint32_t)(c)<=0xffff) { 
-	  //(s)[(i)++]=(uint8_t)(((c)>>12)|0xe0);
-	  sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>12)|0xe0));
-	  fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>12)|0xe0));
-	  ctx->page.front += 3;
-	} else { 
-	  //(s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); 
-	  //(s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80);
-	  sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)>>18)|0xf0));
-	  sprintf(ctx->page.front, ".%02X", (uint8_t)((((c)>>12)&0x3f)|0x80));
-	  fprintf(stderr, ".%02X\n", (uint8_t)(((c)>>18)|0xf0));
-	  fprintf(stderr, ".%02X\n", (uint8_t)((((c)>>12)&0x3f)|0x80));
-	  ctx->page.front += 6;
-	} 
-	//(s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80);
-	sprintf(ctx->page.front, ".%02X", (uint8_t)((((c)>>6)&0x3f)|0x80));
-	fprintf(stderr, ".%02X\n", (uint8_t)((((c)>>6)&0x3f)|0x80));
-	ctx->page.front += 3;
-      } 
-      //(s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80);
-      sprintf(ctx->page.front, ".%02X", (uint8_t)(((c)&0x3f)|0x80));
-      fprintf(stderr, ".%02X\n", (uint8_t)(((c)&0x3f)|0x80));
-      ctx->page.front += 3;
-    } 
+    aux_urlifyChar(&(ctx->page.front), c);
   }
   
   return uw_unit_v;
 }
 
 uw_unit uw_Basis_urlifyString_w(uw_context ctx, uw_Basis_string s) {
+  fprintf(stderr, "uw_Basis_urlifyString_w %s\n", s);
   if (s[0] == '\0') {
     uw_check(ctx, 1);
     uw_writec_unsafe(ctx, '_');
     return uw_unit_v;
   }
 
-  uw_check(ctx, strlen(s) * 3 + !!(s[0] == '_'));
+  uw_check(ctx, strlen(s) * 12 + !!(s[0] == '_'));
 
   if (s[0] == '_')
     uw_writec_unsafe(ctx, '_');
 
-  for (; *s; s++) {
-    unsigned char c = *s;
-
-    if (c == ' ')
+  uw_Basis_char c;
+  int offset = 0;
+  while (s[offset] != 0) {
+    U8_NEXT(s, offset, -1, c);   
+    
+    if (U8_IS_SINGLE(s[offset]) && s[offset] == ' ')
       uw_writec_unsafe(ctx, '+');
-    else if (U8_IS_SINGLE(c) && isalnum(c))
-      uw_writec_unsafe(ctx, c);
-    else {
-      sprintf(ctx->page.front, ".%02X", c);
-      ctx->page.front += 3;
+    else if (U8_IS_SINGLE(s[offset]) && isalnum(s[offset]))
+      uw_writec_unsafe(ctx, s[offset]);
+    else {      
+      aux_urlifyChar(&(ctx->page.front),  c);
     }
   }
 
@@ -2195,6 +2208,7 @@ uw_Basis_time uw_Basis_unurlifyTime(uw_context ctx, char **s) {
 }
 
 static uw_Basis_string uw_unurlifyString_to(int fromClient, uw_context ctx, char *r, char *s) {
+  uw_error(ctx, FATAL, "uw_unurlifyString_to");
   char *s1, *s2 = s;
   int n;
 
@@ -2258,6 +2272,7 @@ uw_Basis_bool uw_Basis_unurlifyBool(uw_context ctx, char **s) {
 }
 
 uw_Basis_string uw_Basis_unurlifyString(uw_context ctx, char **s) {
+  uw_error(ctx, FATAL, "uw_Basis_unurlifyString");
   char *new_s = uw_unurlify_advance(*s);
   char *r;
   int len;
@@ -2278,6 +2293,7 @@ uw_Basis_unit uw_Basis_unurlifyUnit(uw_context ctx, char **s) {
 }
 
 uw_Basis_string uw_Basis_unurlifyString_fromClient(uw_context ctx, char **s) {
+  uw_error(ctx, FATAL, "uw_Basis_unurlifyString_fromClient");
   char *new_s = uw_unurlify_advance(*s);
   char *r;
   int len;
@@ -2540,7 +2556,7 @@ uw_Basis_string uw_Basis_strsuffix(uw_context ctx, uw_Basis_string s, uw_Basis_i
 
 uw_Basis_int uw_Basis_strlen(uw_context ctx, uw_Basis_string s) {
   (void)ctx;
-  fprintf(stderr, "uw_Basis_strlen of %s\n", s);
+  //fprintf(stderr, "uw_Basis_strlen of %s\n", s);
   int offset = 0, iterations = 0;
   while (s[offset] != 0) {
     U8_FWD_1(s, offset, -1);
