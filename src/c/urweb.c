@@ -2013,17 +2013,18 @@ char *uw_Basis_urlifyString(uw_context ctx, uw_Basis_string s) {
     *p++ = '_';
 
   uw_Basis_char c;
-  int offset = 0;
+  int offset = 0, curr = 0;
   while (s[offset] != 0) {
     U8_NEXT(s, offset, -1, c);
   
-    if (U8_IS_SINGLE(s[offset]) && s[offset] == ' ')
+    if (U8_IS_SINGLE(s[curr]) && s[curr] == ' ')
       *p++ = '+';
-    else if (U8_IS_SINGLE(s[offset]) && isalnum(s[offset]))
+    else if (U8_IS_SINGLE(s[curr]) && isalnum(s[curr]))
       *p++ = s[offset];
     else {
       aux_urlifyChar(&p, c);
     }
+    curr = offset;
   }
 
   *p++ = 0;
@@ -2132,17 +2133,18 @@ uw_unit uw_Basis_urlifyString_w(uw_context ctx, uw_Basis_string s) {
     uw_writec_unsafe(ctx, '_');
 
   uw_Basis_char c;
-  int offset = 0;
+  int offset = 0, curr = 0;
   while (s[offset] != 0) {
     U8_NEXT(s, offset, -1, c);   
     
-    if (U8_IS_SINGLE(s[offset]) && s[offset] == ' ')
+    if (U8_IS_SINGLE(s[curr]) && s[curr] == ' ')
       uw_writec_unsafe(ctx, '+');
-    else if (U8_IS_SINGLE(s[offset]) && isalnum(s[offset]))
-      uw_writec_unsafe(ctx, s[offset]);
+    else if (U8_IS_SINGLE(s[curr]) && isalnum(s[curr]))
+      uw_writec_unsafe(ctx, s[curr]);
     else {      
       aux_urlifyChar(&(ctx->page.front),  c);
     }
+    curr = offset;
   }
 
   return uw_unit_v;

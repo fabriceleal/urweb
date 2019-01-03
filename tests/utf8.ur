@@ -8,10 +8,45 @@ fun from_m_upto_n f m n =
     else
 	<xml></xml>
 
+fun from_m_upto_n2 (f : int -> transaction xbody) (m : int) (n : int) : transaction xbody =
+    if m < n then
+	h <- f m;
+	t <- from_m_upto_n2 f (m + 1) n;
+	return <xml>
+	  { h }
+	  { t }
+	</xml>
+    else
+	return <xml></xml>
+	
 fun test_fn_both_sides [a ::: Type] (_ : eq a) (_ : show a) (f : unit -> a) (expected : a) (testname : string) : xbody =
 <xml>
   <p>Server side test: {[testname]}</p>
   <pre>{[show (f () = expected)]}</pre>	
+  <active code={return <xml><p>Client side test: {[testname]}</p><pre>{[show (f () = expected)]}</pre></xml>}>
+</active>
+	</xml>
+
+fun test_fn_both_sides2 [a ::: Type] (_ : eq a) (_ : show a) (f : unit -> a) (serverexp : a) (expected : a) (testname : string) : xbody =
+<xml>
+  <p>Test: {[testname]}</p>
+  <active code={
+	   let
+	       val stest = (serverexp = expected)
+	   in
+	   return <xml>
+	     <p>Server side test: {[testname]}</p>
+	     <pre>{[show stest]}</pre>
+	     {if stest then
+		  <xml></xml>
+	      else
+		  <xml>
+		    <p>S: {[serverexp]}</p>
+		    <p>E: {[expected]}</p>
+		  </xml>}
+	   </xml>
+	   end}>
+</active>
   <active code={return <xml><p>Client side test: {[testname]}</p><pre>{[show (f () = expected)]}</pre></xml>}>
 </active>
 </xml>
@@ -219,54 +254,157 @@ fun highencode () : transaction page =
 
 	</body>
     </xml>
-    
 
+(* substrings *)
+fun substring1 _ = substring "abc" 0 3
+fun substring2 _ = substring "abc" 1 2
+fun substring3 _ = substring "abc" 2 1
+fun substring4 _ = substring "ábó" 0 3
+fun substring5 _ = substring "ábó" 1 2
+fun substring6 _ = substring "ábó" 2 1
+fun substring7 _ = substring "ábó" 0 2
+fun substring8 _ = substring "ábó" 0 1
+fun substring9 _ = substring "" 0 0
+
+fun substringsserver _ =
+    return {
+     T1 = substring1 (),
+     T2 = substring2 (),
+     T3 = substring3 (),
+     T4 = substring4 (),
+     T5 = substring5 (),
+     T6 = substring6 (),
+     T7 = substring7 (),
+     T8 = substring8 (),
+     T9 = substring9 ()
+    }
+		   
 fun substrings () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => substring "abc" 0 3) "abc" "substrings 1"}
-	{test_fn_both_sides (fn _ => substring "abc" 1 2) "bc" "substrings 2"}
-	{test_fn_both_sides (fn _ => substring "abc" 2 1) "c" "substrings 3"}
-	{test_fn_both_sides (fn _ => substring "ábó" 0 3) "ábó" "substrings 4"}
-	{test_fn_both_sides (fn _ => substring "ábó" 1 2) "bó" "substrings 5"}
-	{test_fn_both_sides (fn _ => substring "ábó" 2 1) "ó" "substrings 6"}
-	{test_fn_both_sides (fn _ => substring "ábó" 0 2) "áb" "substrings 7"}
-	{test_fn_both_sides (fn _ => substring "ábó" 0 1) "á" "substrings 8"}
-	{test_fn_both_sides (fn _ => substring "" 0 0) "" "substrings 9"}
+      <body onload={r <- rpc (substringsserver ());
+		    set t (Some r);
+		    return () }>
+	
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' =>
+					      return <xml>
+					   	{test_fn_both_sides2 substring1 t'.T1 "abc" "substrings 1"}
+						{test_fn_both_sides2 substring2 t'.T2 "bc" "substrings 2"} 
+						{test_fn_both_sides2 substring3 t'.T3 "c" "substrings 3"}
+						{test_fn_both_sides2 substring4 t'.T4 "ábó" "substrings 4"}
+						{test_fn_both_sides2 substring5 t'.T5 "bó" "substrings 5"}
+						{test_fn_both_sides2 substring6 t'.T6 "ó" "substrings 6"}
+						{test_fn_both_sides2 substring7 t'.T7 "áb" "substrings 7"}
+						{test_fn_both_sides2 substring8 t'.T8 "á" "substrings 8"}
+						{test_fn_both_sides2 substring9 t'.T9 "" "substrings 9"}
+					      </xml>
+		    } />
       </body>
     </xml>
 
+(* strlen *)
+fun strlen1 _ = strlen "abc"
+fun strlen2 _ = strlen "çbc"
+fun strlen3 _ = strlen "çãc"
+fun strlen4 _ = strlen "çãó"
+fun strlen5 _ = strlen "ç"
+fun strlen6 _ = strlen "c"
+fun strlen7 _ = strlen ""
+fun strlen8 _ = strlen "が"
+fun strlen9 _ = strlen "漢"
+fun strlen10 _ = strlen "カ"
+fun strlen11 _ = strlen "وظيفية"
+fun strlen12 _ = strlen "函數"
+fun strlen13 _ = strlen "Функциональное"
+		 
+fun strlensserver _ =
+    return {
+     T1 = strlen1 (),
+     T2 = strlen2 (),
+     T3 = strlen3 (),
+     T4 = strlen4 (),
+     T5 = strlen5 (),
+     T6 = strlen6 (),
+     T7 = strlen7 (),
+     T8 = strlen8 (),
+     T9 = strlen9 (),
+     T10 = strlen10 (),
+     T11 = strlen11 (),
+     T12 = strlen12 (),
+     T13 = strlen13 ()
+    }
+		 
+fun strlens () : transaction page =
+    t <- source None;
+    return <xml>
+      <body onload={r <- rpc (strlensserver());
+		    set t (Some r);
+		    return ()}>
 
-fun strlens () : transaction page = return <xml>
-  <body> 
-    {test_fn_both_sides (fn _ => strlen "abc") 3 "strlen 1"}
-    {test_fn_both_sides (fn _ => strlen "çbc") 3 "strlen 2"}
-    {test_fn_both_sides (fn _ => strlen "çãc") 3 "strlen 3"}
-    {test_fn_both_sides (fn _ => strlen "çãó") 3 "strlen 4"}
-    {test_fn_both_sides (fn _ => strlen "ç") 1 "strlen 5"}
-    {test_fn_both_sides (fn _ => strlen "c") 1 "strlen 6"}
-    {test_fn_both_sides (fn _ => strlen "") 0 "strlen 7"}
-    {test_fn_both_sides (fn _ => strlen "が") 1 "strlen 8"}
-    {test_fn_both_sides (fn _ => strlen "漢") 1 "strlen 9"}
-    {test_fn_both_sides (fn _ => strlen "カ") 1 "strlen 10"}
-    {test_fn_both_sides (fn _ => strlen "وظيفية") 6 "strlen 11"}
-    {test_fn_both_sides (fn _ => strlen "函數") 2 "strlen 12"}
-    {test_fn_both_sides (fn _ => strlen "Функциональное") 14 "strlen 13"}    
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' =>
+					      return <xml>
+						{test_fn_both_sides2 strlen1 t'.T1 3 "strlen 1"}
+						{test_fn_both_sides2 strlen2 t'.T2 3 "strlen 2"}
+						{test_fn_both_sides2 strlen3 t'.T3 3 "strlen 3"}
+						{test_fn_both_sides2 strlen4 t'.T4 3 "strlen 4"}
+						{test_fn_both_sides2 strlen5 t'.T5 1 "strlen 5"}
+						{test_fn_both_sides2 strlen6 t'.T6 1 "strlen 6"}
+						{test_fn_both_sides2 strlen7 t'.T7 0 "strlen 7"}
+						{test_fn_both_sides2 strlen8 t'.T8 1 "strlen 8"}
+						{test_fn_both_sides2 strlen9 t'.T9 1 "strlen 9"}
+						{test_fn_both_sides2 strlen10 t'.T10 1 "strlen 10"}
+						{test_fn_both_sides2 strlen11 t'.T11 6 "strlen 11"}
+						{test_fn_both_sides2 strlen12 t'.T12 2 "strlen 12"}
+						{test_fn_both_sides2 strlen13 t'.T13 14 "strlen 13"}    
+					      </xml>} />
+
   </body>
-  </xml>
-				       
-fun strlenGens () : transaction page = return <xml>
-  <body>
-    {test_fn_both_sides (fn _ => strlenGe "" 1) False "strlenGe 1"}
-    {test_fn_both_sides (fn _ => strlenGe "" 0) True "strlenGe 2"}
-    {test_fn_both_sides (fn _ => strlenGe "aba" 4) False "strlenGe 3"}
-    {test_fn_both_sides (fn _ => strlenGe "aba" 3) True "strlenGe 4"}
-    {test_fn_both_sides (fn _ => strlenGe "aba" 2) True "strlenGe 5"}
-    {test_fn_both_sides (fn _ => strlenGe "àçá" 4) False "strlenGe 6"}
-    {test_fn_both_sides (fn _ => strlenGe "àçá" 3) True "strlenGe 7"}
-    {test_fn_both_sides (fn _ => strlenGe "àçá" 2) True "strlenGe 8"}    
-  </body>
-  </xml>
+	</xml>
+
+(* strlenGe *)
+fun strlenGe1 _ = strlenGe "" 1
+fun strlenGe2 _ = strlenGe "" 0
+fun strlenGe3 _ = strlenGe "aba" 4
+fun strlenGe4 _ = strlenGe "aba" 3
+fun strlenGe5 _ = strlenGe "aba" 2
+fun strlenGe6 _ = strlenGe "àçá" 4
+fun strlenGe7 _ = strlenGe "àçá" 3
+fun strlenGe8 _ = strlenGe "àçá" 2
+
+fun strleGesserver _ = return {
+		       T1 = strlenGe1 (),
+		       T2 = strlenGe2 (),
+		       T3 = strlenGe3 (),
+		       T4 = strlenGe4 (),
+		       T5 = strlenGe5 (),
+		       T6 = strlenGe6 (),
+		       T7 = strlenGe7 (),
+		       T8 = strlenGe8 ()
+		       }
+		  
+fun strlenGens () : transaction page =
+    t <- source None;
+    return <xml>
+      <body onload={r <- rpc (strleGesserver());
+		    set t (Some r);
+		    return ()}>
+
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					| Some t' =>
+					  return <xml>
+					    {test_fn_both_sides2 strlenGe1 t'.T1 False "strlenGe 1"}
+					    {test_fn_both_sides2 strlenGe2 t'.T2 True "strlenGe 2"}
+					    {test_fn_both_sides2 strlenGe3 t'.T3 False "strlenGe 3"}
+					    {test_fn_both_sides2 strlenGe4 t'.T4 True "strlenGe 4"}
+					    {test_fn_both_sides2 strlenGe5 t'.T5 True "strlenGe 5"}
+					    {test_fn_both_sides2 strlenGe6 t'.T6 False "strlenGe 6"}
+					    {test_fn_both_sides2 strlenGe7 t'.T7 True "strlenGe 7"}
+					    {test_fn_both_sides2 strlenGe8 t'.T8 True "strlenGe 8"}    
+					  </xml>} />
+						  </body>
+    </xml>
 
 type clen = { S : string, L : int }
 
@@ -275,28 +413,59 @@ val clen_eq : eq clen = mkEq (fn a b =>
 
 val clen_show : show clen = mkShow (fn a =>
 				   "{S = " ^ a.S ^ ", L = " ^ (show a.L) ^ "}")
+(* strcat *)
 
+fun teststrcat a b = let val c = strcat a b in {S = c, L = strlen c} end
+fun teststrcat1 _ = teststrcat "" ""
+fun teststrcat2 _ = teststrcat "aa" "bb"
+fun teststrcat3 _ = teststrcat "" "bb"
+fun teststrcat4 _ = teststrcat "aa" ""
+fun teststrcat5 _ = teststrcat "àà" "áá"
+fun teststrcat6 _ = teststrcat "" "áá"
+fun teststrcat7 _ = teststrcat "àà" ""
+fun teststrcat8 _ = teststrcat "函數" "ãã"
+fun teststrcat9 _ = teststrcat "ç" "ã"
+fun teststrcat10 _ = teststrcat (show (strsub "ç" 0)) (show (strsub "ã" 0))
+fun teststrcat11 _ = teststrcat (show (chr 231)) (show (chr 227))
+
+fun strcatsserver () =
+    return {
+    T1 = teststrcat1 (),
+    T2 = teststrcat2 (),
+    T3 = teststrcat3 (),
+    T4 = teststrcat4 (),
+    T5 = teststrcat5 (),
+    T6 = teststrcat6 (),
+    T7 = teststrcat7 (),
+    T8 = teststrcat8 (),
+    T9 = teststrcat9 (),
+    T10 = teststrcat10 (),
+    T11 = teststrcat11 ()   
+    }
+		     
 fun strcats () : transaction page =
-    let
-	fun test_cat_and_len n a b expS expL =
-	    test_fn_both_sides (fn _ => let val c = strcat a b in {S = c, L = strlen c} end) {S=expS, L=expL} ("strcat " ^ (show n))
-    in
-	return <xml>
-	  <body>
-	    {test_cat_and_len 1 "" "" "" 0}	    
-	    {test_cat_and_len 2 "aa" "bb" "aabb" 4}
-	    {test_cat_and_len 3 "" "bb" "bb" 2}
-	    {test_cat_and_len 4 "aa" "" "aa" 2}
-	    {test_cat_and_len 5 "àà" "áá" "ààáá" 4}
-	    {test_cat_and_len 6 "" "áá" "áá" 2}
-	    {test_cat_and_len 7 "àà" "" "àà" 2}
-	    {test_cat_and_len 8 "函數" "ãã" "函數ãã" 4}
-	    {test_cat_and_len 9 "ç" "ã" "çã" 2}
-	    {test_cat_and_len 10 (show (strsub "ç" 0)) (show (strsub "ã" 0)) "çã" 2}
-	    {test_cat_and_len 11 (show (chr 231)) (show (chr 227)) "çã" 2}
-	  </body>
-	</xml>
-end
+    t <- source None;
+    return <xml>
+      <body onload={r <- rpc (strcatsserver ());
+		    set t (Some r);
+		    return ()}>
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      {test_fn_both_sides2 teststrcat1 t'.T1 {S="",L=0} "strcat 1" }
+					      {test_fn_both_sides2 teststrcat2 t'.T2 {S="aabb",L=4} "strcat 2" }
+					      {test_fn_both_sides2 teststrcat3 t'.T3 {S="bb",L=2} "strcat 3" }
+					      {test_fn_both_sides2 teststrcat4 t'.T4 {S="aa",L=2} "strcat 4" }
+					      {test_fn_both_sides2 teststrcat5 t'.T5 {S="ààáá",L=4} "strcat 5" }
+					      {test_fn_both_sides2 teststrcat6 t'.T6 {S="áá",L=2} "strcat 6" }
+					      {test_fn_both_sides2 teststrcat7 t'.T7 {S="àà",L=2} "strcat 7" }
+					      {test_fn_both_sides2 teststrcat8 t'.T8 {S="函數ãã",L=4} "strcat 8" }
+					      {test_fn_both_sides2 teststrcat9 t'.T9 {S="çã",L=2} "strcat 9" }
+					      {test_fn_both_sides2 teststrcat10 t'.T10 {S="çã",L=2} "strcat 10" }
+					      {test_fn_both_sides2 teststrcat11 t'.T11 {S="çã",L=2} "strcat 11" }
+					    </xml>} />
+			</body>
+      </xml>
+
 
 fun strsubs () : transaction page =
     return <xml>
