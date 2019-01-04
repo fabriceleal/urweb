@@ -466,64 +466,192 @@ fun strcats () : transaction page =
 			</body>
       </xml>
 
+(* strsubs *)
 
+fun strsub1 _ = strsub "abàç" 0
+fun strsub2 _ = strsub "abàç" 1
+fun strsub3 _ = strsub "àb" 0
+fun strsub4 _ = strsub "abàç" 2
+fun strsub5 _ = strsub "abàç" 3
+
+fun strsubsserver _ = return {
+		      T1 = strsub1 (),
+		      T2 = strsub2 (),
+		      T3 = strsub3 (),
+		      T4 = strsub4 (),
+		      T5 = strsub5 ()
+		      }
+		
 fun strsubs () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => strsub "abàç" 0) #"a" "strsub 1"}
-	{test_fn_both_sides (fn _ => strsub "abàç" 1) #"b" "strsub 2"}
-	{test_fn_both_sides (fn _ => strsub "àb" 0) (strsub "à" 0) "strsub 3"}
-	{test_fn_both_sides (fn _ => strsub "abàç" 2) (strsub "à" 0) "strsub 4"}
-	{test_fn_both_sides (fn _ => strsub "abàç" 3) (strsub "ç" 0) "strsub 5"}
-      </body>
-      </xml>
+      <body onload={r <- rpc (strsubsserver ());
+		    set t (Some r);
+		    return ()}>
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      	{test_fn_both_sides2 strsub1 t'.T1 #"a" "strsub 1"}
+						{test_fn_both_sides2 strsub2 t'.T2 #"b" "strsub 2"}
+						{test_fn_both_sides2 strsub3 t'.T3 (strsub "à" 0) "strsub 3"}
+						{test_fn_both_sides2 strsub4 t'.T4 (strsub "à" 0) "strsub 4"}
+						{test_fn_both_sides2 strsub5 t'.T5 (strsub "ç" 0) "strsub 5"}
+					      </xml>
+					      } />
 
+      </body>
+	</xml>
+
+(* strsuffixs *)
+fun strsuffix1 _ = strsuffix "abàç" 0
+fun strsuffix2 _ = strsuffix "abàç" 1
+fun strsuffix3 _ = strsuffix "abàç" 2
+fun strsuffix4 _ = strsuffix "abàç" 3
+
+fun strsuffixsserver _ =
+    return {
+    T1 = strsuffix1 (),
+    T2 = strsuffix2 (),
+    T3 = strsuffix3 (),
+    T4 = strsuffix4 ()
+    }
+		   
 fun strsuffixs () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => strsuffix "abàç" 0) "abàç" "strsuffix 1"}
-	{test_fn_both_sides (fn _ => strsuffix "abàç" 1) "bàç" "strsuffix 2"}
-	{test_fn_both_sides (fn _ => strsuffix "abàç" 2) "àç" "strsuffix 3"}
-	{test_fn_both_sides (fn _ => strsuffix "abàç" 3) "ç" "strsuffix 4"}
+      <body  onload={r <- rpc (strsuffixsserver ());
+		    set t (Some r);
+		     return ()}>
+		<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      		{test_fn_both_sides2 strsuffix1 t'.T1 "abàç" "strsuffix 1"}
+							{test_fn_both_sides2 strsuffix2 t'.T2 "bàç" "strsuffix 2"}
+							{test_fn_both_sides2 strsuffix3 t'.T3 "àç" "strsuffix 3"}
+							{test_fn_both_sides2 strsuffix4 t'.T4 "ç" "strsuffix 4"}
+					      </xml>
+					      } />
+
       </body>
     </xml>
 
+(* strchrs *)
+
+fun strchr1 _ = strchr "abàç" #"c"
+fun strchr2 _ = strchr "abàç" #"a"
+fun strchr3 _ = strchr "abàç" #"b"
+fun strchr4 _ = strchr "abàç" (strsub "à" 0)
+fun strchr5 _ = strchr "abàç" (strsub "ç" 0)
+
+fun strchrssserver _ =
+    return {
+    T1 = strchr1 (),
+    T2 = strchr2 (),
+    T3 = strchr3 (),
+    T4 = strchr4 (),
+    T5 = strchr5 ()
+    }
+		
 fun strchrs () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => strchr "abàç" #"c") None "strchr 1"}
-	{test_fn_both_sides (fn _ => strchr "abàç" #"a") (Some "abàç") "strchr 2"}
-	{test_fn_both_sides (fn _ => strchr "abàç" #"b") (Some "bàç") "strchr 3"}
-	{test_fn_both_sides (fn _ => strchr "abàç" (strsub "à" 0)) (Some "àç") "strchr 4"}
-	{test_fn_both_sides (fn _ => strchr "abàç" (strsub "ç" 0)) (Some "ç") "strchr 5"}	    
+      <body onload={r <- rpc (strchrssserver ());
+		    set t (Some r);
+		    return ()}>
+	<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      {test_fn_both_sides2 strchr1 t'.T1 None "strchr 1"}
+					      {test_fn_both_sides2 strchr2 t'.T2 (Some "abàç") "strchr 2"}
+					      {test_fn_both_sides2 strchr3 t'.T3 (Some "bàç") "strchr 3"}
+					      {test_fn_both_sides2 strchr4 t'.T4 (Some "àç") "strchr 4"}
+					      {test_fn_both_sides2 strchr5 t'.T5 (Some "ç") "strchr 5"}
+					      </xml>
+					      } />
+	    
       </body>
-    </xml>
+	</xml>
 
+(* strindexs *)
+fun strindex1 _ = strindex "abàç" #"c"
+fun strindex2 _ = strindex "abàç" #"a"
+fun strindex3 _ = strindex "abàç" #"b"
+fun strindex4 _ = strindex "abàç" (strsub "à" 0)
+fun strindex5 _ = strindex "abàç" (strsub "ç" 0)
+
+fun strindexsserver _ =
+    return {
+    T1 = strindex1 (),
+    T2 = strindex2 (),
+    T3 = strindex3 (),
+    T4 = strindex4 (),
+    T5 = strindex5 ()
+    }
+		  
 fun strindexs () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => strindex "abàç" #"c") None "strindex 1"}
-	{test_fn_both_sides (fn _ => strindex "abàç" #"a") (Some 0) "strindex 2"}
-	{test_fn_both_sides (fn _ => strindex "abàç" #"b") (Some 1) "strindex 3"}
-	{test_fn_both_sides (fn _ => strindex "abàç" (strsub "à" 0)) (Some 2) "strindex 4"}
-	{test_fn_both_sides (fn _ => strindex "abàç" (strsub "ç" 0)) (Some 3) "strindex 5"}	
+      <body onload={r <- rpc (strindexsserver ());
+		    set t (Some r);
+		    return ()}>
+		<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      	{test_fn_both_sides2 strindex1 t'.T1 None "strindex 1"}
+						{test_fn_both_sides2 strindex2 t'.T2 (Some 0) "strindex 2"}
+						{test_fn_both_sides2 strindex3 t'.T3 (Some 1) "strindex 3"}
+						{test_fn_both_sides2 strindex4 t'.T4 (Some 2) "strindex 4"}
+						{test_fn_both_sides2 strindex5 t'.T5 (Some 3) "strindex 5"}
+					      </xml>
+					      } />
+	
       </body>
     </xml>
 
+(*strsindexs*)
+fun strsindex1 _ = strsindex "abàç" ""
+fun strsindex2 _ = strsindex "abàç" "abàç"
+fun strsindex3 _ = strsindex "abàç" "abàc"
+fun strsindex4 _ = strsindex "abàç" "bàç"
+fun strsindex5 _ = strsindex "abàç" "bàc"
+fun strsindex6 _ = strsindex "abàç" "àç"
+fun strsindex7 _ = strsindex "abàç" "àc"
+fun strsindex8 _ = strsindex "abàç" "ç"
+fun strsindex9 _ = strsindex "abàç" "c"
+
+fun strsindexsserver _ =
+    return {
+    T1 = strsindex1 (),
+    T2 = strsindex2 (),
+    T3 = strsindex3 (),
+    T4 = strsindex4 (),
+    T5 = strsindex5 (),
+    T6 = strsindex6 (),
+    T7 = strsindex7 (),
+    T8 = strsindex8 (),
+    T9 = strsindex9 ()
+    }
+    
 fun strsindexs () : transaction page =
+    t <- source None;
     return <xml>
-      <body>
-	{test_fn_both_sides (fn _ => strsindex "abàç" "") (Some 0) "strsindex 1"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "abàç") (Some 0) "strsindex 2"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "abàc") None "strsindex 3"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "bàç") (Some 1) "strsindex 4"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "bàc") None "strsindex 5"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "àç") (Some 2) "strsindex 6"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "àc") None "strsindex 7"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "ç") (Some 3) "strsindex 8"}
-	{test_fn_both_sides (fn _ => strsindex "abàç" "c") None "strsindex 9"}
+      <body onload={r <- rpc (strsindexsserver ());
+		    set t (Some r);
+		    return ()}>
+		<dyn signal={r <- signal t; case r of None => return <xml></xml>
+					    | Some t' => return <xml>
+					      		{test_fn_both_sides2 strsindex1 t'.T1 (Some 0) "strsindex 1"}
+							{test_fn_both_sides2 strsindex2 t'.T2 (Some 0) "strsindex 2"}
+							{test_fn_both_sides2 strsindex3 t'.T3 None "strsindex 3"}
+							{test_fn_both_sides2 strsindex4 t'.T4 (Some 1) "strsindex 4"}
+							{test_fn_both_sides2 strsindex5 t'.T5 None "strsindex 5"}
+							{test_fn_both_sides2 strsindex6 t'.T6 (Some 2) "strsindex 6"}
+							{test_fn_both_sides2 strsindex7 t'.T7 None "strsindex 7"}
+							{test_fn_both_sides2 strsindex8 t'.T8 (Some 3) "strsindex 8"}
+							{test_fn_both_sides2 strsindex9 t'.T9 None "strsindex 9"}
+					      </xml>
+					      } />
+
       </body>
-    </xml>
+		</xml>
+
+(*strcspns*)
 	
 fun strcspns () : transaction page =
     return <xml>
