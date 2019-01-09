@@ -1954,45 +1954,30 @@ char *uw_Basis_urlifyFloat(uw_context ctx, uw_Basis_float n) {
   return r;
 }
 
-void aux_urlifyChar(char** ptr, uw_Basis_char c) {
+static void aux_urlifyChar(char** ptr, uw_Basis_char c) {
   char* p = *ptr;
   
-
-  if((uint32_t)(c)<=0x7f) {
-    //(s)[(i)++]=(uint8_t)(c);
+  if((uint32_t)(c) <= 0x7f) {
     sprintf(p, ".%02X", (uint8_t)(c));
-    //    fprintf(stderr, "#1 .%02X\n", (uint8_t)(c));
     p += 3;
   } else {
-    if((uint32_t)(c)<=0x7ff) {
-      //(s)[(i)++]=(uint8_t)(((c)>>6)|0xc0);
+    if((uint32_t)(c) <= 0x7ff) {
       sprintf(p, ".%02X", (uint8_t)(((c)>>6)|0xc0));
-      //      fprintf(stderr, "#2 .%02X\n", (uint8_t)(((c)>>6)|0xc0));
       p += 3;
     } else {
-      if((uint32_t)(c)<=0xffff) { 
-	//(s)[(i)++]=(uint8_t)(((c)>>12)|0xe0);
+      if((uint32_t)(c) <= 0xffff) { 
 	sprintf(p, ".%02X", (uint8_t)(((c)>>12)|0xe0));
-	//	fprintf(stderr, "#3 .%02X\n", (uint8_t)(((c)>>12)|0xe0));
 	p += 3;
       } else { 
-	//(s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); 
-	//(s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80);
 	sprintf(p, ".%02X", (uint8_t)(((c)>>18)|0xf0));
 	p += 3;
 	sprintf(p, ".%02X", (uint8_t)((((c)>>12)&0x3f)|0x80));
 	p += 3;
-	//	fprintf(stderr, "#4 .%02X\n", (uint8_t)(((c)>>18)|0xf0));
-	//	fprintf(stderr, "#5 .%02X\n", (uint8_t)((((c)>>12)&0x3f)|0x80));
       } 
-      //(s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80);
       sprintf(p, ".%02X", (uint8_t)((((c)>>6)&0x3f)|0x80));
-      //      fprintf(stderr, "#6 .%02X\n", (uint8_t)((((c)>>6)&0x3f)|0x80));
       p += 3;
     } 
-    //(s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80);
     sprintf(p, ".%02X", (uint8_t)(((c)&0x3f)|0x80));
-    //    fprintf(stderr, "#7 .%02X\n", (uint8_t)(((c)&0x3f)|0x80));
     p += 3;
   }
 
@@ -2001,7 +1986,6 @@ void aux_urlifyChar(char** ptr, uw_Basis_char c) {
 
 char *uw_Basis_urlifyString(uw_context ctx, uw_Basis_string s) {
   char *r, *p;
-  //  fprintf(stderr, "uw_Basis_urlifyString\n");
 
   if (s[0] == '\0')
     return "_";
@@ -2095,8 +2079,6 @@ uw_unit uw_Basis_urlifyTime_w(uw_context ctx, uw_Basis_time t) {
 }
 
 uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
-  //  fprintf(stderr, "uw_Basis_urlifyChar_w\n");
-
   if (c == '\0') {
     uw_check(ctx, 1);
     uw_writec_unsafe(ctx, '_');
@@ -2120,7 +2102,6 @@ uw_unit uw_Basis_urlifyChar_w(uw_context ctx, uw_Basis_char c) {
 }
 
 uw_unit uw_Basis_urlifyString_w(uw_context ctx, uw_Basis_string s) {
-  //  fprintf(stderr, "uw_Basis_urlifyString_w %s\n", s);
   if (s[0] == '\0') {
     uw_check(ctx, 1);
     uw_writec_unsafe(ctx, '_');
@@ -2210,7 +2191,6 @@ uw_Basis_time uw_Basis_unurlifyTime(uw_context ctx, char **s) {
 }
 
 static uw_Basis_string uw_unurlifyString_to(int fromClient, uw_context ctx, char *r, char *s) {
-  //  fprintf(stderr, "uw_unurlifyString_to\n");
   char *s1, *s2 = s;
   int n;
 
@@ -2274,7 +2254,6 @@ uw_Basis_bool uw_Basis_unurlifyBool(uw_context ctx, char **s) {
 }
 
 uw_Basis_string uw_Basis_unurlifyString(uw_context ctx, char **s) {
-  //  fprintf(stderr, "uw_Basis_unurlifyString\n");
   char *new_s = uw_unurlify_advance(*s);
   char *r;
   int len;
@@ -2295,7 +2274,6 @@ uw_Basis_unit uw_Basis_unurlifyUnit(uw_context ctx, char **s) {
 }
 
 uw_Basis_string uw_Basis_unurlifyString_fromClient(uw_context ctx, char **s) {
-  //  fprintf(stderr, "uw_Basis_unurlifyString_fromClient\n");
   char *new_s = uw_unurlify_advance(*s);
   char *r;
   int len;
@@ -2558,7 +2536,6 @@ uw_Basis_string uw_Basis_strsuffix(uw_context ctx, uw_Basis_string s, uw_Basis_i
 
 uw_Basis_int uw_Basis_strlen(uw_context ctx, uw_Basis_string s) {
   (void)ctx;
-  //fprintf(stderr, "uw_Basis_strlen of %s\n", s);
   int offset = 0, iterations = 0;
   while (s[offset] != 0) {
     U8_FWD_1(s, offset, -1);
